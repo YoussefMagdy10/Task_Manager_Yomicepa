@@ -4,6 +4,17 @@ export const openapi = {
     title: "Task Manager API",
     version: "1.0.0",
   },
+
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
+      },
+    },
+  },
+
   paths: {
     "/api/auth/signup": {
       post: {
@@ -47,6 +58,17 @@ export const openapi = {
       post: {
         summary: "Logout (revoke refresh token + clear cookie)",
         responses: { "200": { description: "OK" } },
+      },
+    },
+
+    "/api/me": {
+      get: {
+        summary:"Get current user",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "OK" },
+          "401": { description: "Unauthorized" },
+        },
       },
     },
   },

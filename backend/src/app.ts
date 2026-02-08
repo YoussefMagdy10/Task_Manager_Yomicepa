@@ -4,6 +4,7 @@ import { authRouter } from "./modules/auth/auth.routes";
 import { errorHandler } from "./middleware/errorHandler";
 import swaggerUi from "swagger-ui-express";
 import { openapi } from "./docs/swagger";
+import { meRouter } from "./modules/me/me.routes";
 
 export function createApp() {
   const app = express();
@@ -14,12 +15,14 @@ export function createApp() {
   app.get("/health", (_req, res) => res.json({ ok: true }));
 
   app.use("/api/auth", authRouter);
+  app.use("/api", meRouter);
 
   // Swagger
   app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapi));
 
   // Error handler last
   app.use(errorHandler);
+
 
   return app;
 }
