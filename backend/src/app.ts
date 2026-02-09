@@ -6,10 +6,17 @@ import swaggerUi from "swagger-ui-express";
 import { openapi } from "./docs/swagger";
 import { meRouter } from "./modules/me/me.routes";
 import { tasksRouter } from "./modules/tasks/tasks.routes";
-
+import cors from "cors";
 
 export function createApp() {
   const app = express();
+
+  app.use(
+    cors({
+      origin: "http://localhost:5173",
+      credentials: true,
+    })
+  );
 
   app.use(express.json());
   app.use(cookieParser());
