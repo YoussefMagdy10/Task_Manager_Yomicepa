@@ -153,7 +153,7 @@ export function DashboardPage() {
           >
             <TextField
               label="Title"
-              placeholder="e.g. Buy groceries"
+              placeholder="e.g. Create Schema"
               disabled={busy}
               {...createForm.register("title")}
               error={!!createForm.formState.errors.title}
