@@ -61,29 +61,29 @@ Create a `.env` file at the project root and add the values described in the .en
 
 Then, 
 
-### Install dependencies:
+1- Install dependencies:
 
-- npm install
+npm install
 
-### Generate Prisma client:
+2- Generate Prisma client:
 
-- npx prisma generate
+npx prisma generate
 
-### Run migrations:
+3- Run migrations:
 
-- npx prisma migrate dev
+npx prisma migrate dev
 
-### Start dev server
+4- Start dev server
 
-- npm run dev
+npm run dev
 
 
 ## In the frontend directory:
 
-### Install dependencies:
+1- Install dependencies:
 
-- npm install
+npm install
 
-### Start dev server
+2- Start dev server
 
 - npm run dev
