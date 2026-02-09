@@ -5,6 +5,8 @@ import { errorHandler } from "./middleware/errorHandler";
 import swaggerUi from "swagger-ui-express";
 import { openapi } from "./docs/swagger";
 import { meRouter } from "./modules/me/me.routes";
+import { tasksRouter } from "./modules/tasks/tasks.routes";
+
 
 export function createApp() {
   const app = express();
@@ -16,6 +18,7 @@ export function createApp() {
 
   app.use("/api/auth", authRouter);
   app.use("/api", meRouter);
+  app.use("/api", tasksRouter);
 
   // Swagger
   app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapi));

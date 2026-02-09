@@ -71,5 +71,47 @@ export const openapi = {
         },
       },
     },
+    "/api/tasks": {
+      get: {
+        summary: "List my tasks",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "completed",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: ["true", "false"] },
+          },
+        ],
+        responses: {
+          "200": { description: "OK" },
+          "401": { description: "Unauthorized" },
+        },
+      },
+      post: {
+        summary: "Create a task",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["title"],
+                properties: {
+                  title: { type: "string" },
+                  description: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": { description: "Created" },
+          "400": { description: "Validation error" },
+          "401": { description: "Unauthorized" },
+        },
+      },
+    },
   },
 };
