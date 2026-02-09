@@ -12,7 +12,15 @@ type EditingState =
 export function DashboardPage() {
   const { user, logout } = useAuth();
 
-  const { data: tasks, isLoading, isError, error } = useTasks();
+  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+
+  const completedParam =
+    filter === "all" ? undefined : filter === "completed" ? true : false;
+
+  const { data: tasks, isLoading, isError, error } = useTasks({
+    ...(completedParam === undefined ? {} : { completed: completedParam }),
+  });
+
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
@@ -161,6 +169,42 @@ export function DashboardPage() {
       {/* List */}
       <section>
         <h3 style={{ marginBottom: 8 }}>My Tasks</h3>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
+          <span style={{ color: "#666" }}>Filter:</span>
+
+          <button
+            type="button"
+            onClick={() => setFilter("all")}
+            disabled={busy}
+            style={{ fontWeight: filter === "all" ? 700 : 400 }}
+          >
+            All
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFilter("active")}
+            disabled={busy}
+            style={{ fontWeight: filter === "active" ? 700 : 400 }}
+          >
+            Active
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFilter("completed")}
+            disabled={busy}
+            style={{ fontWeight: filter === "completed" ? 700 : 400 }}
+          >
+            Completed
+          </button>
+        </div>
+
+        <div style={{ color: "#666", marginBottom: 10 }}>
+          Showing {sorted.length} task{sorted.length === 1 ? "" : "s"}
+        </div>
+
+
 
         {isLoading && <p>Loading tasks...</p>}
         {isError && (
