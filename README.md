@@ -57,7 +57,9 @@ Built with TypeScript, Express, MySQL, Prisma, JWT auth, Zod validation, Swagger
 
 ## In the backend directory:
 
-Create a `.env` file at the project root and add the values described in the .env.example file in backend, replacing only the DATABASE_URL with your actual one.
+1- Create a `.env` file at the project root and add the values described in the .env.example file in backend, replacing only the DATABASE_URL with your actual one.
+
+2- Delete the migrations directory (if exists) in backend/prisma.
 
 Then, 
 
@@ -65,7 +67,7 @@ Then,
 
 npm install
 
-2- Generate Prisma client:
+2- Generate Prisma client: (If this command causes an error, make sure you deleted the migrations directory, then retry).
 
 npx prisma generate
 
