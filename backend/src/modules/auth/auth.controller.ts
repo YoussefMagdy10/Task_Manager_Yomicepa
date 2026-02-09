@@ -19,6 +19,9 @@ function cookieOptions() {
 const COOKIE_NAME = process.env.COOKIE_NAME ?? "refreshToken";
 
 export const signup = asyncHandler(async (req: Request, res: Response) => {
+  console.log("username raw:", JSON.stringify(req.body.username));
+  console.log("codes:", [...String(req.body.username ?? "")].map(c => c.charCodeAt(0)));
+
   const body = signupSchema.parse(req.body);
 
   const existing = await prisma.user.findFirst({

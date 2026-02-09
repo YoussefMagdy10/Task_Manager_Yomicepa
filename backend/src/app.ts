@@ -7,10 +7,12 @@ import { openapi } from "./docs/swagger";
 import { meRouter } from "./modules/me/me.routes";
 import { tasksRouter } from "./modules/tasks/tasks.routes";
 import cors from "cors";
+import morgan from "morgan";
 
 export function createApp() {
   const app = express();
 
+  app.use(morgan("dev"));
   app.use(
     cors({
       origin: "http://localhost:5173",
