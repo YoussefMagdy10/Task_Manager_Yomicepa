@@ -1,0 +1,1213 @@
+{
+	"info": {
+		"_postman_id": "796e62bb-a312-4e1a-8971-6bb649833ff4",
+		"name": "Task Manager",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "18286086"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "UserA",
+					"item": [
+						{
+							"name": "Signup",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const body = pm.response.json();",
+											"",
+											"// save access token",
+											"pm.environment.set(\"A_TOKEN\", body.accessToken);",
+											"",
+											"// save rotated refresh cookie (only the refreshToken=... part)",
+											"const setCookie = pm.response.headers.get(\"Set-Cookie\") || \"\";",
+											"const cookiePair = setCookie.split(\";\")[0]; // \"refreshToken=xxxxx\"",
+											"pm.environment.set(\"A_REFRESH_COOKIE\", cookiePair);",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Authorization\",",
+											"  value: \"Bearer \" + pm.environment.get(\"A_TOKEN\"),",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{ \n    \"email\": \"{{A_EMAIL}}\", \n    \"username\": \"{{A_USERNAME}}\", \n    \"password\": \"{{A_PASSWORD}}\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/auth/signup",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"auth",
+										"signup"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Signin",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const body = pm.response.json();",
+											"",
+											"// save access token",
+											"pm.environment.set(\"A_TOKEN\", body.accessToken);",
+											"",
+											"// save rotated refresh cookie (only the refreshToken=... part)",
+											"const setCookie = pm.response.headers.get(\"Set-Cookie\") || \"\";",
+											"const cookiePair = setCookie.split(\";\")[0]; // \"refreshToken=xxxxx\"",
+											"pm.environment.set(\"A_REFRESH_COOKIE\", cookiePair);",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{ \n    \"email\": \"{{A_EMAIL}}\", \n    \"password\": \"{{A_PASSWORD}}\" \n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/auth/signin",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"auth",
+										"signin"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Refresh",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const body = pm.response.json();",
+											"",
+											"// save access token",
+											"pm.environment.set(\"A_TOKEN\", body.accessToken);",
+											"",
+											"// save rotated refresh cookie (only the refreshToken=... part)",
+											"const setCookie = pm.response.headers.get(\"Set-Cookie\") || \"\";",
+											"const cookiePair = setCookie.split(\";\")[0]; // \"refreshToken=xxxxx\"",
+											"pm.environment.set(\"A_REFRESH_COOKIE\", cookiePair);",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Cookie\",",
+											"  value: pm.environment.get(\"A_REFRESH_COOKIE\"),",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Cookie",
+										"value": "{{A_REFRESH_COOKIE}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseURL}}/api/auth/refresh",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"auth",
+										"refresh"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Logout",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Cookie\",",
+											"  value: pm.environment.get(\"A_REFRESH_COOKIE\"),",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.environment.set(\"A_REFRESH_COOKIE\", \"\");",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Cookie",
+										"value": "{{A_REFRESH_COOKIE}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseURL}}/api/auth/logout",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"auth",
+										"logout"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "UserB",
+					"item": [
+						{
+							"name": "Signup",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const body = pm.response.json();",
+											"pm.environment.set(\"B_TOKEN\", body.accessToken);",
+											"",
+											"const setCookie = pm.response.headers.get(\"Set-Cookie\") || \"\";",
+											"const cookiePair = setCookie.split(\";\")[0];",
+											"pm.environment.set(\"B_REFRESH_COOKIE\", cookiePair);",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Authorization\",",
+											"  value: \"Bearer \" + pm.environment.get(\"B_TOKEN\"),",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{ \n    \"email\": \"{{B_EMAIL}}\", \n    \"username\": \"{{B_USERNAME}}\", \n    \"password\": \"{{B_PASSWORD}}\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/auth/signup",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"auth",
+										"signup"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Signin",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const body = pm.response.json();",
+											"pm.environment.set(\"B_TOKEN\", body.accessToken);",
+											"",
+											"const setCookie = pm.response.headers.get(\"Set-Cookie\") || \"\";",
+											"const cookiePair = setCookie.split(\";\")[0];",
+											"pm.environment.set(\"B_REFRESH_COOKIE\", cookiePair);",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{ \n    \"email\": \"{{B_EMAIL}}\", \n    \"password\": \"{{B_PASSWORD}}\" \n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/auth/signin",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"auth",
+										"signin"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Refresh",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const body = pm.response.json();",
+											"pm.environment.set(\"B_TOKEN\", body.accessToken);",
+											"",
+											"const setCookie = pm.response.headers.get(\"Set-Cookie\") || \"\";",
+											"const cookiePair = setCookie.split(\";\")[0];",
+											"pm.environment.set(\"B_REFRESH_COOKIE\", cookiePair);",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Cookie\",",
+											"  value: pm.environment.get(\"B_REFRESH_COOKIE\"),",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Cookie",
+										"value": "{{B_REFRESH_COOKIE}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/auth/refresh",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"auth",
+										"refresh"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Logout",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Cookie\",",
+											"  value: pm.environment.get(\"B_REFRESH_COOKIE\"),",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.environment.set(\"B_REFRESH_COOKIE\", \"\");",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Cookie",
+										"value": "{{B_REFRESH_COOKIE}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/auth/logout?",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"auth",
+										"logout"
+									],
+									"query": [
+										{
+											"key": "",
+											"value": null
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Me_A",
+			"item": [
+				{
+					"name": "me",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.environment.set(\"accessToken\", pm.response.json().accessToken);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.upsert({",
+									"  key: \"Authorization\",",
+									"  value: \"Bearer \" + pm.environment.get(\"A_TOKEN\"),",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/me",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"me"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Me_B",
+			"item": [
+				{
+					"name": "me",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.upsert({",
+									"  key: \"Authorization\",",
+									"  value: \"Bearer \" + pm.environment.get(\"B_TOKEN\"),",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/me",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"me"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Tasks",
+			"item": [
+				{
+					"name": "CRUD - task",
+					"item": [
+						{
+							"name": "create_task_A",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"pm.environment.set(\"A_TASK_ID\", json.task.id);",
+											"pm.test(\"201 created\", () => pm.response.to.have.status(201));",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Authorization\",",
+											"  value: \"Bearer \" + pm.environment.get(\"A_TOKEN\"),",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{ \"title\": \"A task\", \"description\": \"Owned by A\" }\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/tasks",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"tasks"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create_task_B",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Authorization\",",
+											"  value: \"Bearer \" + pm.environment.get(\"A_TOKEN\"),",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Authorization\",",
+											"  value: \"Bearer \" + pm.environment.get(\"A_TOKEN\"),",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{ \"title\": \"B task\", \"description\": \"Owned by B\" }\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/tasks",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"tasks"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "list_tasks_A",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const json = pm.response.json();",
+											"pm.test(\"200 ok\", () => pm.response.to.have.status(200));",
+											"pm.test(\"does not include B task\", () => {",
+											"  const ids = json.tasks.map(t => t.id);",
+											"  pm.expect(ids).to.not.include(pm.environment.get(\"B_TASK_ID\"));",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Authorization\",",
+											"  value: \"Bearer \" + pm.environment.get(\"A_TOKEN\"),",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/tasks",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"tasks"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get_A_task",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// const json = pm.response.json();",
+											"// pm.test(\"200 ok\", () => pm.response.to.have.status(200));",
+											"// pm.test(\"does not include B task\", () => {",
+											"//   const ids = json.tasks.map(t => t.id);",
+											"//   pm.expect(ids).to.not.include(pm.environment.get(\"B_TASK_ID\"));",
+											"// });",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Authorization\",",
+											"  value: \"Bearer \" + pm.environment.get(\"A_TOKEN\"),",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/tasks/{{A_TASK_ID}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"tasks",
+										"{{A_TASK_ID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "get_A_task_as_B",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"404\", () => pm.response.to.have.status(404));",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Authorization\",",
+											"  value: \"Bearer \" + pm.environment.get(\"B_TOKEN\"),",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/tasks/{{A_TASK_ID}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"tasks",
+										"{{A_TASK_ID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "update_A_task_as_B",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"404\", () => pm.response.to.have.status(404));",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Authorization\",",
+											"  value: \"Bearer \" + pm.environment.get(\"B_TOKEN\"),",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{ \"title\": \"Hacked\" }\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/tasks/{{A_TASK_ID}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"tasks",
+										"{{A_TASK_ID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "update_A_task_as_A",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Authorization\",",
+											"  value: \"Bearer \" + pm.environment.get(\"A_TOKEN\"),",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{ \"completed\": true }\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/tasks/{{A_TASK_ID}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"tasks",
+										"{{A_TASK_ID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete_A_task_as_B",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"404\", () => pm.response.to.have.status(404));",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Authorization\",",
+											"  value: \"Bearer \" + pm.environment.get(\"B_TOKEN\"),",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/tasks/{{A_TASK_ID}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"tasks",
+										"{{A_TASK_ID}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "delete_A_task_as_A",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.upsert({",
+											"  key: \"Authorization\",",
+											"  value: \"Bearer \" + pm.environment.get(\"A_TOKEN\"),",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/tasks/{{A_TASK_ID}}",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"tasks",
+										"{{A_TASK_ID}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

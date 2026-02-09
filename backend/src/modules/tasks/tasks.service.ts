@@ -35,20 +35,22 @@ export async function updateMyTaskById(
 ) {
   if (!userId) throw new HttpError(401, "UNAUTHORIZED");
 
-  const existing = await repo.findTaskByIdAndUser(userId, taskId);
-  if (!existing) throw new HttpError(404, "TASK_NOT_FOUND");
-
-  // IMPORTANT: never pass undefined fields to Prisma (exactOptionalPropertyTypes)
-  return repo.updateTaskById(taskId, {
+  const count = await repo.updateTaskByIdAndUser(userId, taskId, {
     ...(input.title !== undefined ? { title: input.title } : {}),
     ...(input.description !== undefined ? { description: input.description } : {}),
     ...(input.completed !== undefined ? { completed: input.completed } : {}),
   });
+
+  if (count === 0) throw new HttpError(404, "TASK_NOT_FOUND");
+
+  const task = await repo.findTaskByIdAndUser(userId, taskId);
+  if (!task) throw new HttpError(404, "TASK_NOT_FOUND");
+  return task;
 }
 
 export async function deleteMyTaskById(userId: string, taskId: string) {
   if (!userId) throw new HttpError(401, "UNAUTHORIZED");
 
-  const deletedCount = await repo.deleteTaskByIdAndUser(userId, taskId);
+  const deletedCount = await repo.deleteTaskById(userId, taskId);
   if (deletedCount === 0) throw new HttpError(404, "TASK_NOT_FOUND");
 }

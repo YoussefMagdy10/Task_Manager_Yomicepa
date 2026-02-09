@@ -51,19 +51,20 @@ export type TaskUpdateInput = {
   completed?: boolean;
 };
 
-export function updateTaskById(taskId: string, data: TaskUpdateInput) {
-  return prisma.task.update({
-    where: { id: taskId },
+export async function updateTaskByIdAndUser(userId: string, taskId: string, data: TaskUpdateInput) {
+  const res = await prisma.task.updateMany({
+    where: { id: taskId, userId },
     data: {
       ...(data.title !== undefined ? { title: data.title } : {}),
       ...(data.description !== undefined ? { description: data.description } : {}),
       ...(data.completed !== undefined ? { completed: data.completed } : {}),
     },
-    select: taskSelect,
   });
+
+  return res.count; // 0 means not found (or not owned)
 }
 
-export async function deleteTaskByIdAndUser(userId: string, taskId: string) {
+export async function deleteTaskById(userId: string, taskId: string) {
   const res = await prisma.task.deleteMany({
     where: { id: taskId, userId },
   });
