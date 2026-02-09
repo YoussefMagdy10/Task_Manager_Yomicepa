@@ -4,18 +4,29 @@ import { useCreateTask, useDeleteTask, useTasks, useUpdateTask } from "../hooks/
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createTaskFormSchema, type CreateTaskFormValues, editTaskFormSchema, type EditTaskFormValues } from "../validation/tasks";
+import {
+  Box, Button, Card, CardContent, Checkbox, Chip, Container, Divider, 
+  FormControlLabel, IconButton, Stack, TextField, Typography, DialogActions, 
+  DialogTitle, DialogContent, DialogContentText, Dialog
+} from "@mui/material";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
+import CloseIcon from "@mui/icons-material/Close";
+import LogoutIcon from "@mui/icons-material/Logout";
 
-type EditingState =
-  | { id: null }
-  | { id: string };
+type EditingState = { id: null } | { id: string };
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
 
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
-
-  const completedParam =
-    filter === "all" ? undefined : filter === "completed" ? true : false;
+  const [confirmDelete, setConfirmDelete] = useState<{
+    open: boolean;  taskId: string | null; title: string;
+  }>({
+    open: false,  taskId: null, title: "",
+  });
+  const completedParam = filter === "all" ? undefined : filter === "completed" ? true : false;
 
   const { data: tasks, isLoading, isError, error } = useTasks({
     ...(completedParam === undefined ? {} : { completed: completedParam }),
@@ -32,10 +43,9 @@ export function DashboardPage() {
     return [...tasks].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
   }, [tasks]);
 
-  const busy =
-    createTask.isPending || updateTask.isPending || deleteTask.isPending;
+  const busy = createTask.isPending || updateTask.isPending || deleteTask.isPending;
 
-  // -------- Create form (RHF + Zod) --------
+  // Create form
   const createForm = useForm<CreateTaskFormValues>({
     resolver: zodResolver(createTaskFormSchema),
     defaultValues: { title: "", description: "" },
@@ -54,7 +64,7 @@ export function DashboardPage() {
     createForm.reset({ title: "", description: "" });
   }
 
-  // -------- Edit form (RHF + Zod) --------
+  // Edit form
   const editForm = useForm<EditTaskFormValues>({
     resolver: zodResolver(editTaskFormSchema),
     defaultValues: { title: "", description: "" },
@@ -63,10 +73,7 @@ export function DashboardPage() {
 
   function startEdit(task: { id: string; title: string; description?: string | null }) {
     setEditing({ id: task.id });
-    editForm.reset({
-      title: task.title,
-      description: task.description ?? "",
-    });
+    editForm.reset({ title: task.title, description: task.description ?? "" });
   }
 
   function cancelEdit() {
@@ -75,25 +82,15 @@ export function DashboardPage() {
 
   async function onSaveEdit(values: EditTaskFormValues) {
     if (!editing.id) return;
-
     const title = values.title.trim();
     const desc = (values.description ?? "").trim();
 
     await updateTask.mutateAsync({
       id: editing.id,
-      input: {
-        title,
-        // send empty string if user cleared it (valid per backend schema)
-        description: desc,
-      },
+      input: { title, description: desc },
     });
 
     setEditing({ id: null });
-  }
-
-  async function onDelete(id: string) {
-    if (editing.id === id) cancelEdit();
-    await deleteTask.mutateAsync(id);
   }
 
   async function toggleComplete(id: string, current: boolean) {
@@ -101,218 +98,270 @@ export function DashboardPage() {
     await updateTask.mutateAsync({ id, input: { completed: !current } });
   }
 
-  return (
-    <div style={{ maxWidth: 900, margin: "40px auto", padding: "0 16px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
-        <div>
-          <h2 style={{ margin: 0 }}>Welcome, {user?.username}</h2>
-          <div style={{ color: "#666", marginTop: 4 }}>{user?.email}</div>
-        </div>
-        <button onClick={logout}>Logout</button>
-      </div>
+  async function confirmDeleteTask() {
+    if (!confirmDelete.taskId) return;
 
-      <hr style={{ margin: "20px 0" }} />
+    const id = confirmDelete.taskId;
+    setConfirmDelete({ open: false, taskId: null, title: "" });
+
+    await onDelete(id);
+  }
+
+  async function onDelete(id: string) {
+    if (editing.id === id) cancelEdit();
+    await deleteTask.mutateAsync(id);
+  }
+
+  const apiErrorCode =
+    (isError ? (error as any)?.response?.data?.error?.code : null) ??
+    (createTask.isError ? (createTask.error as any)?.response?.data?.error?.code : null) ??
+    (updateTask.isError ? (updateTask.error as any)?.response?.data?.error?.code : null) ??
+    (deleteTask.isError ? (deleteTask.error as any)?.response?.data?.error?.code : null);
+
+  return (
+    <Container maxWidth="md" sx={{ py: 5 }}>
+      {/* Header */}
+      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
+        <Box>
+          <Typography variant="h4" fontWeight={700}>
+            Welcome, {user?.username}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {user?.email}
+          </Typography>
+        </Box>
+
+        <Button variant="outlined" startIcon={<LogoutIcon />} onClick={logout}>
+          Logout
+        </Button>
+      </Stack>
+
+      <Divider sx={{ my: 3 }} />
 
       {/* Create */}
-      <section>
-        <h3 style={{ marginBottom: 8 }}>Add Task</h3>
+      <Card variant="outlined">
+        <CardContent>
+          <Typography variant="h6" fontWeight={700} gutterBottom>
+            Add Task
+          </Typography>
 
-        <form
-          onSubmit={createForm.handleSubmit(onCreate)}
-          style={{ display: "grid", gap: 8 }}
-        >
-          <div>
-            <input
-              placeholder="Title (required)"
+          <Stack
+            component="form"
+            onSubmit={createForm.handleSubmit(onCreate)}
+            spacing={2}
+            sx={{ mt: 1 }}
+          >
+            <TextField
+              label="Title"
+              placeholder="e.g. Buy groceries"
+              disabled={busy}
               {...createForm.register("title")}
-              disabled={busy}
-              style={{ width: "100%" }}
+              error={!!createForm.formState.errors.title}
+              helperText={createForm.formState.errors.title?.message ?? " "}
+              fullWidth
             />
-            {createForm.formState.errors.title && (
-              <div style={{ color: "crimson", marginTop: 4 }}>
-                {createForm.formState.errors.title.message}
-              </div>
-            )}
-          </div>
 
-          <div>
-            <textarea
-              placeholder="Description (optional)"
+            <TextField
+              label="Description"
+              placeholder="Optional"
+              disabled={busy}
               {...createForm.register("description")}
-              disabled={busy}
-              rows={3}
-              style={{ width: "100%" }}
+              error={!!createForm.formState.errors.description}
+              helperText={createForm.formState.errors.description?.message ?? " "}
+              fullWidth
+              multiline
+              minRows={3}
             />
-            {createForm.formState.errors.description && (
-              <div style={{ color: "crimson", marginTop: 4 }}>
-                {createForm.formState.errors.description.message}
-              </div>
-            )}
-          </div>
 
-          <div>
-            <button type="submit" disabled={busy || createTask.isPending}>
-              {createTask.isPending ? "Creating..." : "Create"}
-            </button>
-          </div>
-        </form>
+            <Box>
+              <Button type="submit" variant="contained" disabled={busy || createTask.isPending}>
+                {createTask.isPending ? "Creating..." : "Create"}
+              </Button>
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
 
-        {createTask.isError && (
-          <p style={{ color: "crimson" }}>
-            Create failed: {(createTask.error as any)?.response?.data?.error?.code ?? "ERROR"}
-          </p>
-        )}
-      </section>
+      <Divider sx={{ my: 3 }} />
 
-      <hr style={{ margin: "20px 0" }} />
+      {/* Filter + List */}
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+        <Typography variant="h6" fontWeight={700}>
+          My Tasks
+        </Typography>
 
-      {/* List */}
-      <section>
-        <h3 style={{ marginBottom: 8 }}>My Tasks</h3>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
-          <span style={{ color: "#666" }}>Filter:</span>
-
-          <button
-            type="button"
+        <Stack direction="row" spacing={1}>
+          <Chip
+            label="All"
+            clickable
+            color={filter === "all" ? "primary" : "default"}
+            variant={filter === "all" ? "filled" : "outlined"}
             onClick={() => setFilter("all")}
             disabled={busy}
-            style={{ fontWeight: filter === "all" ? 700 : 400 }}
-          >
-            All
-          </button>
-
-          <button
-            type="button"
+          />
+          <Chip
+            label="Active"
+            clickable
+            color={filter === "active" ? "primary" : "default"}
+            variant={filter === "active" ? "filled" : "outlined"}
             onClick={() => setFilter("active")}
             disabled={busy}
-            style={{ fontWeight: filter === "active" ? 700 : 400 }}
-          >
-            Active
-          </button>
-
-          <button
-            type="button"
+          />
+          <Chip
+            label="Completed"
+            clickable
+            color={filter === "completed" ? "primary" : "default"}
+            variant={filter === "completed" ? "filled" : "outlined"}
             onClick={() => setFilter("completed")}
             disabled={busy}
-            style={{ fontWeight: filter === "completed" ? 700 : 400 }}
-          >
-            Completed
-          </button>
-        </div>
+          />
+        </Stack>
+      </Stack>
 
-        <div style={{ color: "#666", marginBottom: 10 }}>
-          Showing {sorted.length} task{sorted.length === 1 ? "" : "s"}
-        </div>
+      {isLoading && <Typography color="text.secondary">Loading tasks...</Typography>}
 
+      {apiErrorCode && (
+        <Typography sx={{ mt: 1 }} color="error">
+          Error: {apiErrorCode}
+        </Typography>
+      )}
 
+      {!isLoading && !isError && sorted.length === 0 && (
+        <Typography color="text.secondary">No tasks yet. Add your first one above.</Typography>
+      )}
 
-        {isLoading && <p>Loading tasks...</p>}
-        {isError && (
-          <p style={{ color: "crimson" }}>
-            Failed to load: {(error as any)?.response?.data?.error?.code ?? "ERROR"}
-          </p>
-        )}
+      <Stack spacing={2} sx={{ mt: 2 }}>
+        {sorted.map((t) => {
+          const isEditing = editing.id === t.id;
 
-        {!isLoading && !isError && sorted.length === 0 && (
-          <p style={{ color: "#666" }}>No tasks yet. Add your first one above.</p>
-        )}
-
-        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10 }}>
-          {sorted.map((t) => {
-            const isEditing = editing.id === t.id;
-
-            return (
-              <li
-                key={t.id}
-                style={{
-                  border: "1px solid #ddd",
-                  borderRadius: 8,
-                  padding: 12,
-                  display: "grid",
-                  gap: 10,
-                }}
-              >
+          return (
+            <Card key={t.id} variant="outlined">
+              <CardContent>
                 {!isEditing ? (
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-                    <label style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer" }}>
-                      <input
-                        type="checkbox"
-                        checked={t.completed}
-                        onChange={() => toggleComplete(t.id, t.completed)}
-                        disabled={busy}
+                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+                    <Box sx={{ flex: 1 }}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={t.completed}
+                            onChange={() => toggleComplete(t.id, t.completed)}
+                            disabled={busy}
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography
+                              fontWeight={700}
+                              sx={{ textDecoration: t.completed ? "line-through" : "none" }}
+                            >
+                              {t.title}
+                            </Typography>
+                            {t.description ? (
+                              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, whiteSpace: "pre-wrap" }}>
+                                {t.description}
+                              </Typography>
+                            ) : null}
+                          </Box>
+                        }
                       />
-                      <div>
-                        <div style={{ fontWeight: 600, textDecoration: t.completed ? "line-through" : "none" }}>
-                          {t.title}
-                        </div>
-                        {t.description ? (
-                          <div style={{ color: "#555", marginTop: 4, whiteSpace: "pre-wrap" }}>{t.description}</div>
-                        ) : null}
-                      </div>
-                    </label>
+                    </Box>
 
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={() => startEdit(t)} disabled={busy}>Edit</button>
-                      <button onClick={() => onDelete(t.id)} disabled={busy}>Delete</button>
-                    </div>
-                  </div>
+                    <Stack direction="row" spacing={1}>
+                      <IconButton aria-label="edit" onClick={() => startEdit(t)} disabled={busy}>
+                        <EditOutlinedIcon />
+                      </IconButton>
+                      <IconButton aria-label="delete" onClick={() => setConfirmDelete({ open: true, taskId: t.id, title: t.title })} disabled={busy}>
+                        <DeleteOutlineIcon />
+                      </IconButton>
+                    </Stack>
+                  </Stack>
                 ) : (
-                  <form onSubmit={editForm.handleSubmit(onSaveEdit)} style={{ display: "grid", gap: 8 }}>
-                    <div>
-                      <input
-                        {...editForm.register("title")}
-                        disabled={busy}
-                        placeholder="Title"
-                        style={{ width: "100%" }}
-                      />
-                      {editForm.formState.errors.title && (
-                        <div style={{ color: "crimson", marginTop: 4 }}>
-                          {editForm.formState.errors.title.message}
-                        </div>
-                      )}
-                    </div>
+                  <Stack component="form" onSubmit={editForm.handleSubmit(onSaveEdit)} spacing={2}>
+                    <TextField
+                      label="Title"
+                      disabled={busy}
+                      {...editForm.register("title")}
+                      error={!!editForm.formState.errors.title}
+                      helperText={editForm.formState.errors.title?.message ?? " "}
+                      fullWidth
+                    />
 
-                    <div>
-                      <textarea
-                        {...editForm.register("description")}
-                        disabled={busy}
-                        placeholder="Description"
-                        rows={3}
-                        style={{ width: "100%" }}
-                      />
-                      {editForm.formState.errors.description && (
-                        <div style={{ color: "crimson", marginTop: 4 }}>
-                          {editForm.formState.errors.description.message}
-                        </div>
-                      )}
-                    </div>
+                    <TextField
+                      label="Description"
+                      disabled={busy}
+                      {...editForm.register("description")}
+                      error={!!editForm.formState.errors.description}
+                      helperText={editForm.formState.errors.description?.message ?? " "}
+                      fullWidth
+                      multiline
+                      minRows={3}
+                    />
 
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button type="submit" disabled={busy || updateTask.isPending}>
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        startIcon={<SaveOutlinedIcon />}
+                        disabled={busy || updateTask.isPending}
+                      >
                         {updateTask.isPending ? "Saving..." : "Save"}
-                      </button>
-                      <button type="button" onClick={cancelEdit} disabled={busy}>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outlined"
+                        startIcon={<CloseIcon />}
+                        onClick={cancelEdit}
+                        disabled={busy}
+                      >
                         Cancel
-                      </button>
-                    </div>
-                  </form>
+                      </Button>
+                    </Stack>
+                  </Stack>
                 )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </Stack>
+  
+    <Dialog
+      open={confirmDelete.open}
+      onClose={() =>
+        setConfirmDelete({ open: false, taskId: null, title: "" })
+      }
+    >
+      <DialogTitle>Delete task?</DialogTitle>
 
-                {(updateTask.isError || deleteTask.isError) && (
-                  <div style={{ color: "crimson" }}>
-                    {updateTask.isError
-                      ? `Update failed: ${(updateTask.error as any)?.response?.data?.error?.code ?? "ERROR"}`
-                      : null}
-                    {deleteTask.isError
-                      ? ` Delete failed: ${(deleteTask.error as any)?.response?.data?.error?.code ?? "ERROR"}`
-                      : null}
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-    </div>
+      <DialogContent>
+        <DialogContentText>
+          This will permanently delete{" "}
+          <strong>{confirmDelete.title}</strong>.
+        </DialogContentText>
+      </DialogContent>
+
+      <DialogActions>
+        <Button
+          onClick={() =>
+            setConfirmDelete({ open: false, taskId: null, title: "" })
+          }
+          disabled={deleteTask.isPending}
+        >
+          Cancel
+        </Button>
+
+        <Button
+          color="error"
+          variant="contained"
+          onClick={confirmDeleteTask}
+          disabled={deleteTask.isPending}
+        >
+          {deleteTask.isPending ? "Deleting..." : "Delete"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+
+    </Container>
+  
   );
+  
 }
