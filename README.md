@@ -86,4 +86,4 @@ npm install
 
 2- Start dev server
 
-- npm run dev
+npm run dev
