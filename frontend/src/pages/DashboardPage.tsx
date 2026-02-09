@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
 import { useAuth } from "../auth/AuthProvider";
 import { useCreateTask, useDeleteTask, useTasks, useUpdateTask } from "../hooks/tasksHooks";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createTaskFormSchema, type CreateTaskFormValues, editTaskFormSchema, type EditTaskFormValues } from "../validation/tasks";
 
 type EditingState =
   | { id: null }
-  | { id: string; title: string; description: string };
+  | { id: string };
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
@@ -13,9 +16,6 @@ export function DashboardPage() {
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
 
   const [editing, setEditing] = useState<EditingState>({ id: null });
 
@@ -27,29 +27,35 @@ export function DashboardPage() {
   const busy =
     createTask.isPending || updateTask.isPending || deleteTask.isPending;
 
-  async function onCreate(e: React.FormEvent) {
-    e.preventDefault();
-    const t = title.trim();
-    if (!t) return;
+  // -------- Create form (RHF + Zod) --------
+  const createForm = useForm<CreateTaskFormValues>({
+    resolver: zodResolver(createTaskFormSchema),
+    defaultValues: { title: "", description: "" },
+    mode: "onTouched",
+  });
+
+  async function onCreate(values: CreateTaskFormValues) {
+    const title = values.title.trim();
+    const desc = (values.description ?? "").trim();
 
     await createTask.mutateAsync({
-      title: t,
-      ...(description.trim() ? { description: description.trim() } : {}),
+      title,
+      ...(desc ? { description: desc } : {}),
     });
 
-    setTitle("");
-    setDescription("");
+    createForm.reset({ title: "", description: "" });
   }
 
-  async function toggleComplete(id: string, current: boolean) {
-    // don't toggle while editing that same task (optional UX)
-    if (editing.id === id) return;
-    await updateTask.mutateAsync({ id, input: { completed: !current } });
-  }
+  // -------- Edit form (RHF + Zod) --------
+  const editForm = useForm<EditTaskFormValues>({
+    resolver: zodResolver(editTaskFormSchema),
+    defaultValues: { title: "", description: "" },
+    mode: "onTouched",
+  });
 
   function startEdit(task: { id: string; title: string; description?: string | null }) {
-    setEditing({
-      id: task.id,
+    setEditing({ id: task.id });
+    editForm.reset({
       title: task.title,
       description: task.description ?? "",
     });
@@ -59,18 +65,18 @@ export function DashboardPage() {
     setEditing({ id: null });
   }
 
-  async function saveEdit() {
+  async function onSaveEdit(values: EditTaskFormValues) {
     if (!editing.id) return;
 
-    const newTitle = editing.title.trim();
-    if (!newTitle) return;
+    const title = values.title.trim();
+    const desc = (values.description ?? "").trim();
 
     await updateTask.mutateAsync({
       id: editing.id,
       input: {
-        title: newTitle,
-        // send description only if user typed something; otherwise omit it
-        ...(editing.description.trim() ? { description: editing.description.trim() } : { description: "" }),
+        title,
+        // send empty string if user cleared it (valid per backend schema)
+        description: desc,
       },
     });
 
@@ -80,6 +86,11 @@ export function DashboardPage() {
   async function onDelete(id: string) {
     if (editing.id === id) cancelEdit();
     await deleteTask.mutateAsync(id);
+  }
+
+  async function toggleComplete(id: string, current: boolean) {
+    if (editing.id === id) return;
+    await updateTask.mutateAsync({ id, input: { completed: !current } });
   }
 
   return (
@@ -94,28 +105,50 @@ export function DashboardPage() {
 
       <hr style={{ margin: "20px 0" }} />
 
+      {/* Create */}
       <section>
         <h3 style={{ marginBottom: 8 }}>Add Task</h3>
-        <form onSubmit={onCreate} style={{ display: "grid", gap: 8 }}>
-          <input
-            placeholder="Title (required)"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            disabled={busy}
-          />
-          <textarea
-            placeholder="Description (optional)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            disabled={busy}
-            rows={3}
-          />
+
+        <form
+          onSubmit={createForm.handleSubmit(onCreate)}
+          style={{ display: "grid", gap: 8 }}
+        >
           <div>
-            <button type="submit" disabled={busy || !title.trim()}>
+            <input
+              placeholder="Title (required)"
+              {...createForm.register("title")}
+              disabled={busy}
+              style={{ width: "100%" }}
+            />
+            {createForm.formState.errors.title && (
+              <div style={{ color: "crimson", marginTop: 4 }}>
+                {createForm.formState.errors.title.message}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <textarea
+              placeholder="Description (optional)"
+              {...createForm.register("description")}
+              disabled={busy}
+              rows={3}
+              style={{ width: "100%" }}
+            />
+            {createForm.formState.errors.description && (
+              <div style={{ color: "crimson", marginTop: 4 }}>
+                {createForm.formState.errors.description.message}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <button type="submit" disabled={busy || createTask.isPending}>
               {createTask.isPending ? "Creating..." : "Create"}
             </button>
           </div>
         </form>
+
         {createTask.isError && (
           <p style={{ color: "crimson" }}>
             Create failed: {(createTask.error as any)?.response?.data?.error?.code ?? "ERROR"}
@@ -125,6 +158,7 @@ export function DashboardPage() {
 
       <hr style={{ margin: "20px 0" }} />
 
+      {/* List */}
       <section>
         <h3 style={{ marginBottom: 8 }}>My Tasks</h3>
 
@@ -174,38 +208,50 @@ export function DashboardPage() {
                     </label>
 
                     <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={() => startEdit(t)} disabled={busy}>
-                        Edit
-                      </button>
-                      <button onClick={() => onDelete(t.id)} disabled={busy}>
-                        Delete
-                      </button>
+                      <button onClick={() => startEdit(t)} disabled={busy}>Edit</button>
+                      <button onClick={() => onDelete(t.id)} disabled={busy}>Delete</button>
                     </div>
                   </div>
                 ) : (
-                  <div style={{ display: "grid", gap: 8 }}>
-                    <input
-                      value={editing.title}
-                      onChange={(e) => setEditing({ ...editing, title: e.target.value })}
-                      disabled={busy}
-                      placeholder="Title"
-                    />
-                    <textarea
-                      value={editing.description}
-                      onChange={(e) => setEditing({ ...editing, description: e.target.value })}
-                      disabled={busy}
-                      placeholder="Description"
-                      rows={3}
-                    />
+                  <form onSubmit={editForm.handleSubmit(onSaveEdit)} style={{ display: "grid", gap: 8 }}>
+                    <div>
+                      <input
+                        {...editForm.register("title")}
+                        disabled={busy}
+                        placeholder="Title"
+                        style={{ width: "100%" }}
+                      />
+                      {editForm.formState.errors.title && (
+                        <div style={{ color: "crimson", marginTop: 4 }}>
+                          {editForm.formState.errors.title.message}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <textarea
+                        {...editForm.register("description")}
+                        disabled={busy}
+                        placeholder="Description"
+                        rows={3}
+                        style={{ width: "100%" }}
+                      />
+                      {editForm.formState.errors.description && (
+                        <div style={{ color: "crimson", marginTop: 4 }}>
+                          {editForm.formState.errors.description.message}
+                        </div>
+                      )}
+                    </div>
+
                     <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={saveEdit} disabled={busy || !editing.title.trim()}>
+                      <button type="submit" disabled={busy || updateTask.isPending}>
                         {updateTask.isPending ? "Saving..." : "Save"}
                       </button>
-                      <button onClick={cancelEdit} disabled={busy}>
+                      <button type="button" onClick={cancelEdit} disabled={busy}>
                         Cancel
                       </button>
                     </div>
-                  </div>
+                  </form>
                 )}
 
                 {(updateTask.isError || deleteTask.isError) && (
