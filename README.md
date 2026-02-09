@@ -57,33 +57,33 @@ Built with TypeScript, Express, MySQL, Prisma, JWT auth, Zod validation, Swagger
 
 ## In the backend directory:
 
-Create a `.env` file at the project root and add the values described in the .env.example file in backend, replacing ony the DATABASE_URL with your actual one.
+Create a `.env` file at the project root and add the values described in the .env.example file in backend, replacing only the DATABASE_URL with your actual one.
 
 Then, 
 
 ### Install dependencies:
 
-npm install
+- npm install
 
 ### Generate Prisma client:
 
-npx prisma generate
+- npx prisma generate
 
 ### Run migrations:
 
-npx prisma migrate dev
+- npx prisma migrate dev
 
 ### Start dev server
 
-npm run dev
+- npm run dev
 
 
 ## In the frontend directory:
 
 ### Install dependencies:
 
-npm install
+- npm install
 
 ### Start dev server
 
-npm run dev
+- npm run dev
